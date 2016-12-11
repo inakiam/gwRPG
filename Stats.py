@@ -38,34 +38,24 @@ class Stats(object):
 
     offset[7] = 4
 
+    #TEST VALS REMOVE LATER
+    bStats = [33+1j, 1+44444j, 1j+332552, 2j + 22249, 1j+11232, 1j+2, 1j+7**7]
 
+    def __genSegs__(self):
 
-    def __buildSegments__(self):
+        dS = self.dStats
+        mod = len(dS) / 2
 
-        return []
+        return [[(-ds[i] / 2 + int(i/2)) %  mod, (ds[i] / 2 + int(i/2)) % mod]
+                for i in range(len(dS))] 
 
+    def __calcInnateBuffs__(self):
 
-    def __dbRemove__(self):
+        segs = __genSegs__()
 
-        norms = self.dStats
-        norms = [[0 - val/2, 0 + val/2] for val in norms]
+        register = 0
 
-        positions = [[self.offset[i] + int(i/2), self.offset[i] + int(i/2)]
-                     for i in range(14)]
         
-        norms = [(norms[i] + positions[i]) % 7 for i in range(14)]
-
-        
-
-        #Stores all overlaps in format [[mainRange],[mainRange]...]
-        #[mainrange] = [rangeStart,rangeEnd,principleOne,principleTwo]
-        overlapIndex = []
-
-        #start and end points for the ranges
-        sePoints = []
-
-        for i in range(len(self.dStats)):
-            break
 
             
         
