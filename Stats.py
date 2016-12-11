@@ -1,53 +1,33 @@
-from math import log
-from math import ceil
+from math import log,ceil
 
 class Stats(object):
 
-    #Base Stats. Directly Modifiable.
-##    PHS = 1+1j
-##    RES = 1+1j
-##    INS = 1+1j
-##    INT = 1+1j
-##    PER = 1+1j
-##    EXS = 1+1j
-##
-##    #Class Stat. Directly Modifiable.
-##    CLS = [1+1j,'Default', 'DEF']
+    #Let's allow human-memorable setters and getters.
+    nameMap = {'PHS':0,'RES':1,'INS':2,'INT':3,'PER':4,'EXS':5,'CLS':6,
+               'ST':0,'SP':1,'FL':2,'WT':3,'SM':4,'ID':5,'VT':6,'IM':7,
+               'IS':8,'NS':9,'AP':10,'DS':11,'CR':12,'CI':13}
+
+    #Base Stats Vector. See above.
+    bStats = [1+1j] * 7
+
+    #Class name and Abbrevs?
+    CLS = ['UNDEFINED','ERR']
+
+    #Postcalc Base Stats.
+    bStatsFinal = []
+
+    #Derived Stats Vector. What's abctually used in calculation for ease of code
+    dStats = [0] * 14
 
     #Offset Modifier Vector. Gives a value for how much a Complex Base Stat can
     #grow before negative effects are invoked. Directly Modifiable.
     #Format: [PHS.realOffset,PHS.imagOffset,...CLS.realOffset, CLS.imagOffset]
     offset = [0] * 14
 
-    #Derived Stats. Calculated from Base.
-##    ST = 0
-##    SP = 0
-##    FL = 0
-##    WT = 0
-##    SM = 0
-##    ID = 0
-##    VT = 0
-##    IM = 0
-##    IS = 0
-##    NS = 0
-##    AP = 0
-##    DS = 0
-##    CR = 0
-##    CI = 0
 
-    #Derived Stats Vector. What's abctually used in calculation for ease of code
-    dStats = [0] * 14
+    def __buildSegments__(self):
 
-    #Base Stats Vector. See above.
-    bStats = [1+1j] * 7
-
-    #Class name and Abbrevs?
-    CLS = ['Dummy','DMM']
-
-    #Let's allow human-memorable setters and getters.
-    nameMap = {'PHS':0,'RES':1,'INS':2,'INT':3,'PER':4,'EXS':5,'CLS':6,
-               'ST':0,'SP':1,'FL':2,'WT':3,'SM':4,'ID':5,'VT':6,'IM':7,
-               'IS':8,'NS':9,'AP':10,'DS':11,'CR':12,'CI':13}
+        return []
 
 
     def __dbRemove__(self):
@@ -67,81 +47,91 @@ class Stats(object):
         overlapIndex = []
 
         #start and end points for the ranges
-        sePoints = [for i range(12)] + [[]]
+        sePoints = []
 
         for i in range(len(self.dStats)):
-            
-##    def __calcDebuffs__(self):
-##
-##        old = self.dStats.copy()
-##        new = [-old[i]/2 for i in rand(len(old))]
-##
-##        for i in range(len(old)):
-##
-##            magnitude = int(old[i])
-##            count = 0
-##
-##            for j in range((-magnitude + i) % len(old),(magnitude + i) % len(old):
-##
-##                if 
-##
-##                new[i] += len(old)**-1 * 
+            break
 
             
         
+    def __calcBaseFinal__(self):
 
-        
+        bStats = self.bStats
+        offset = self.offset
 
-    def __calcStats__(self):
+        #Reset bStatsFinal vec
+        self.bStatsFinal = [0] * len(bStats)
+
+        for i in range(len(bStats)):
+
+            if (bStats[i].real  > 1) and (bStats[i].imag > 1):
+
+                lRe = log(bStats[i].real,7)
+                lIm = log(bStats[i].imag,7)
+                baseDiffs = complex(max(lRe-lIm,0),max(lIm-lRe,0))
+                effectiveOffsets = complex(min(offset[i*2+1],lIm),
+                                           min(offset[i*2],lRe))
+                
+                nStat = baseDiffs + effectiveOffsets
+
+                print(bStats[i],lRe,lIm,baseDiffs,effectiveOffsets,offset,nStat)
+                
+                self.bStatsFinal[i] += complex(7**nStat.real,7**nStat.imag)
+
+            else: self.bStatsFinal[i] += bStats[i]
+    
+
+    def __calcDerivStats__(self):
         '''Calculates derived stats.'''
 
         #This aborted list comprehension calculates the derived stats...
 
-        for i in range(len(self.dStats)):
-
-            bSt = [float(self.bStats[int(i/2)].real),
-                   float(self.bStats[int(i/2)].imag)]
-
-            #log of stat currently being calculated, and it's opposing piece.
-            lbStat = log(bSt[i%2], 7)
-            loStat = log(bSt[(i+1)%2], 7)
-
-            #Determine real-imag degredation...
-            anaceptVal = max(loStat - self.offset[i], 0)
-
-            print(lbStat, loStat, anaceptVal)
-
-            self.dStats[i] = lbStat - anaceptVal
-
-        #Finally, determine growth debuffs.
-        #self.__calcDebuffs__()    
-
-
-        #self.ST,self.SP,self.FL,self.WT,self.SM,self.ID,self.VT,self.IM, \
-        #self.IS,self.NS,self.AP,self.DS,self.CR,self.CI = self.dStats        
+        
         
 
     def __init__(self,cls):
 
-        self.CLS = [self.CLS[0],cls[0],cls[1]]
+        self.CLS = cls
 
-        self.PHS += 33
-        self.RES += 44444j
-        self.INS += 332552
-        self.INT += 4j + 22249
-        self.PER += 11232
-        self.EXS += 2
+        self.bStats = [33, 44444j, 332552, 2j + 22249, 11232, 2, 7**7]
 
-        self.__calcStats__()
+        self.__calcBaseFinal__()
 
-    def setPHS(self,phs):
+    def classUp(self,newclass):
 
-        self.PHS += complex(phs)
+        '''Class promotion method.
+           newclass = [clasName,statAbrev,modifiers]'''
+        #modifiers is either a scalar, or a len(self.offsets) vector.
+
+        #Overall procedure: scale offsets by how much stronger or weaker new
+        #class is. Then calculate a naive dStats vector, scale *that*, and
+        #reconstruct the bStats
+
+        self.CLS = newclass[:2]
+
+        #if the new class only has a scalar modifier relative to the old...
+        #and really, this should absolutely never be the case.
+        mods = [newclass[3]] * len(self.offsets) if type(newclass[3])\
+               is int else newclass[3]
+        
+        self.offsets = [self.offsets[i]/mods[i] for i in
+                        range(len(self.offsets))]
+
+        tempDStats = [self.bStats[int(i/2)].real if i % 2 == 0 else
+                      self.bStats[int(i/2)].imag for i in range(len(self.dStats
+                                                                    ))]
+        tempDStats = [log(tempDStats[i],7)/mods[i] for i in
+                      range(len(tempDStats))]
+
+        self.bStats = [round(7**tempDStats[i*2]) + round(7**tempDStats[i*2 + 1])
+                       * 1j for i in range(len(self.bStats))]
+
+        
+
+        
+
+        
         
 
         
 a = Stats(['Alpha Tester','ALP'])
-a.setPHS(7)
-print(a.ST)
-a.setPHS(7+7j)
-print(a.ST)
