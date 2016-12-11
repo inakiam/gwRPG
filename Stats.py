@@ -103,8 +103,8 @@ class Stats(object):
                            self.dStats))]
 
         #Build debuff vec
-        self.dSDB = [(-log(self.bStatsFinal[int(i/2)].real,7) if i % 2 == 0 else
-                      -log(self.bStatsFinal[int(i/2)].imag,7))/2
+        self.dSDB = [(-log(self.bStatsFinal[int(i/2)].imag,7) if i % 2 == 0 else
+                      -log(self.bStatsFinal[int(i/2)].real,7))/2
                      for i in range(len(self.dStats))]
 
     def __init__(self,cls):
@@ -117,7 +117,7 @@ class Stats(object):
 
         self.__calcDerivStats__()
 
-        #self.__caclFinalBuffs__()
+        #self.__calcFinalBuffs__()
 
     def classUp(self,newclass):
 
