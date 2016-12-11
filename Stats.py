@@ -3,7 +3,7 @@ from math import log,ceil
 class Stats(object):
 
     #Let's allow human-memorable setters and getters.
-    nameMap = {'PHS':0,'RES':1,'INS':2,'INT':3,'PER':4,'EXS':5,'CLS':6,
+    nameMap = {'PHS':0,'RES':1,'INS':2,'INT':3,'PER':4,'EXS':5,'CLV':6,
                'ST':0,'SP':1,'VT':2,'IM':3,'FL':4,'WT':5,'SM':6,'ID':7,
                'IS':8,'NS':9,'AP':10,'DS':11,'CR':12,'CI':13}
 
@@ -35,6 +35,8 @@ class Stats(object):
     #grow before negative effects are invoked. Directly Modifiable.
     #Format: [PHS.realOffset,PHS.imagOffset,...CLS.realOffset, CLS.imagOffset]
     offset = [0] * len(bStats) * 2
+
+    offset[7] = 4
 
 
 
@@ -107,17 +109,15 @@ class Stats(object):
                       -log(self.bStatsFinal[int(i/2)].real,7))/2
                      for i in range(len(self.dStats))]
 
-    def __init__(self,cls):
+    def __init__(self,cls=['Undefined,ERR']):
 
-        self.CLS = cls
-
-        self.bStats = [33+1j, 1+44444j, 1j+332552, 2j + 22249, 1j+11232, 1j+2, 1j+7**7]
+        if self.CLS[1] == 'ERR': self.CLS = cls
 
         self.__calcBaseFinal__()
 
         self.__calcDerivStats__()
 
-        #self.__calcFinalBuffs__()
+        #self.__calcInnateBuffs__()
 
     def classUp(self,newclass):
 
@@ -141,19 +141,81 @@ class Stats(object):
 
         tempDStats = [self.bStats[int(i/2)].real if i % 2 == 0 else
                       self.bStats[int(i/2)].imag for i in range(len(self.dStats
-                                                                    ))]
+                      ))]
+        
         tempDStats = [log(tempDStats[i],7)/mods[i] for i in
                       range(len(tempDStats))]
 
         self.bStats = [round(7**tempDStats[i*2]) + round(7**tempDStats[i*2 + 1])
                        * 1j for i in range(len(self.bStats))]
 
-        
 
-        
+    def setSTBuff(self,buff):
 
+        self.stBuffs += buff
+
+    def setLTBuff(self,buff):
+
+        self.ltBuffs += buff
+
+    def remSTBuff(self,buff):
+        self.stBuffs.remove(buff)
+
+    def remLTBuff(self,buff):
+        self.ltBuffs.remove(buff)
+
+    def statUp(self,stat,incr):
+
+        ''''stat is a numerical index corresponding to bStats or a string
+            corresponding to a key in nameMap. incr is a real, imaginary, or
+            complex int.'''
+
+        if type(stat) is str: stat = nameMap[stat]
+
+        self.bStats[stat] += incr
+
+    def reportStat(self,base,index):
+
+        if type(index) is str: index = self.nameMap[index]
+
+        return self.bStats[index] if base else self.dStats[index]
+
+    def reportBuff(self,base,index):
+
+        if type(index) is str: index = nameMap[index]
+
+        longterm = 0
+        shortterm = 0
+
+        for i in ltBuffs: longterm += i[0] if i[1] == index else 0
+        for i in stBuffs: shortterm += i[0] if i[1] == index else 0
+
+            
+
+        return [self.dSDB[index],longterm,shorterm]
+
+    def textReport(self):
+        '''Write current into to stdout? Is that what we call what print does?'''
+        nm = self.nameMap
+        b = self.bStats
+        d = self.dStats
+        db = self.dSDB
+        bf = self.bStatsFinal
         
+        leKeys = ['PHS','RES','INS','INT','PER','EXS','CLV']
+               
+        seKeys = ['ST','SP','VT','IM','FL','WT','SM','ID',
+               'IS','NS','AP','DS','CR','CI']
+
+        bsR = [val + ": " + str(b[nm[val]]) + '\n' for val in leKeys]
+        fbsR = [val + ": " + str(bf[nm[val]]) + '\n' for val in leKeys]
+        dsR = [val + ": " + str(d[nm[val]]) + '\n' for val in seKeys]
+        dbR = [val + ": " + str(db[nm[val]]) + '\n' for val in seKeys]
         
+        print("-Base Stats-\n\n" + ''.join(bsR) + "\n-Final Base Stats-\n\n" +
+              ''.join(fbsR) + "\n-Derived Stats-\n\n" + ''.join(dsR) +
+              "\n-dStat Debuffs\n\n" + ''.join(dbR))
 
         
 a = Stats(['Alpha Tester','ALP'])
+a.textReport()
