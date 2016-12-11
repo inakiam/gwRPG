@@ -4,7 +4,7 @@ class Stats(object):
 
     #Let's allow human-memorable setters and getters.
     nameMap = {'PHS':0,'RES':1,'INS':2,'INT':3,'PER':4,'EXS':5,'CLS':6,
-               'ST':0,'SP':1,'FL':2,'WT':3,'SM':4,'ID':5,'VT':6,'IM':7,
+               'ST':0,'SP':1,'VT':2,'IM':3,'FL':4,'WT':5,'SM':6,'ID':7,
                'IS':8,'NS':9,'AP':10,'DS':11,'CR':12,'CI':13}
 
     #Base Stats Vector. See above.
@@ -17,12 +17,25 @@ class Stats(object):
     bStatsFinal = []
 
     #Derived Stats Vector. What's abctually used in calculation for ease of code
-    dStats = [0] * 14
+    dStats = [0] * len(bStats) * 2
+
+
+    #Debuffs Vector. Needs to be separate so calculating debuff removal doesn't
+    #alter the stats under consideration.
+    dSDB = [0] * len(bStats) * 2
+
+    #Short and long-term non-innate buff vectors. Use short term for status fx
+    #long term for item bonuses and/or weird permanent effects.
+    #Format: [[buff,buffStatKey],...]. Ex: Buff ID + 1 = [1,7], or [1,'ID']
+    
+    stBuffs = []
+    ltBuffs = []
 
     #Offset Modifier Vector. Gives a value for how much a Complex Base Stat can
     #grow before negative effects are invoked. Directly Modifiable.
     #Format: [PHS.realOffset,PHS.imagOffset,...CLS.realOffset, CLS.imagOffset]
-    offset = [0] * 14
+    offset = [0] * len(bStats) * 2
+
 
 
     def __buildSegments__(self):
@@ -84,18 +97,27 @@ class Stats(object):
     def __calcDerivStats__(self):
         '''Calculates derived stats.'''
 
-        #This aborted list comprehension calculates the derived stats...
+        #Build base deriv stats
+        self.dStats = [log(self.bStatsFinal[int(i/2)].real,7) if i % 2 == 0 else
+                       log(self.bStatsFinal[int(i/2)].imag,7) for i in range(len(
+                           self.dStats))]
 
-        
-        
+        #Build debuff vec
+        self.dSDB = [(-log(self.bStatsFinal[int(i/2)].real,7) if i % 2 == 0 else
+                      -log(self.bStatsFinal[int(i/2)].imag,7))/2
+                     for i in range(len(self.dStats))]
 
     def __init__(self,cls):
 
         self.CLS = cls
 
-        self.bStats = [33, 44444j, 332552, 2j + 22249, 11232, 2, 7**7]
+        self.bStats = [33+1j, 1+44444j, 1j+332552, 2j + 22249, 1j+11232, 1j+2, 1j+7**7]
 
         self.__calcBaseFinal__()
+
+        self.__calcDerivStats__()
+
+        #self.__caclFinalBuffs__()
 
     def classUp(self,newclass):
 
