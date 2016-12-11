@@ -1,4 +1,11 @@
-# gwRPG
+# gwRPG - Grey World Ruleset
+
+The code in this repositiory is being developed to model the functiong of RPGs running the Grey World Ruleset; an unreleased system created by a personal friend. The eventual goal is to fully implement the details of the system, and then to enshrine it in a program similar to what *anathema* is for Exalted games.
+
+
+A (highly incomplete) guide to system mechnics and features in english follows.
+
+------
 
 ##Base Stats
 
