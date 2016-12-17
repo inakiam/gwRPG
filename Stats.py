@@ -24,6 +24,10 @@ class Stats(object):
     #alter the stats under consideration.
     dSDB = [0] * len(bStats) * 2
 
+    #Rebuff Vec + ALmighty Vec. Latter determines
+    buffs = [0] * len(bStats) * 2
+    almighty = [False] * len(bStats) * 2
+
     #Short and long-term non-innate buff vectors. Use short term for status fx
     #long term for item bonuses and/or weird permanent effects.
     #Format: [[buff,buffStatKey],...]. Ex: Buff ID + 1 = [1,7], or [1,'ID']
@@ -43,17 +47,55 @@ class Stats(object):
 
     def __genSegs__(self):
 
-        dS = self.dStats
-        mod = len(dS) / 2
+        ds = self.dStats
+        mod = len(ds) / 2
 
-        return [[(-ds[i] / 2 + int(i/2)) %  mod, (ds[i] / 2 + int(i/2)) % mod]
-                for i in range(len(dS))] 
+        segs = [[(-ds[i] / 2 + int(i/2)) %  mod, (ds[i] / 2 + int(i/2)) % mod]
+                for i in range(len(ds))]
+        segs = [segs[i] if ds[i] % 7 != 0 else (True if int(ds[i]) == 7
+                                                else False)
+                for i in range(len(segs))]
+        return segs
+
+    def __testSeg__(self,index,order,segs,curSeg):
+        '''Recursive determiner.'''
+
+        
+
 
     def __calcInnateBuffs__(self):
 
         segs = __genSegs__()
 
-        register = 0
+        for i in range(len(segs)):
+
+            order = 0
+
+            if segs[i]
+
+            for item in segs:
+
+                if type(item) is complex:
+
+                    #Don't count self or opposing stat!
+                    if item != segs[i] and item != segs[i-1 if i%2 == 1 else i+1]:
+
+                        #run the segtest, which is in another function because
+                        #recursion
+                        __testSeg__(i,order,segs,item)
+                        
+
+                elif item: #if its bool/true
+
+                    order += 1
+                    self.buffs[i] += 1/(len(self.dStats) * self.dStats[i]
+
+            if order >= 7:
+                
+
+                self.almighty[i] = True
+
+        buffs = [item if item <= 3.5 else 3.5 for item in buffs
 
         
 
@@ -209,3 +251,4 @@ class Stats(object):
         
 a = Stats(['Alpha Tester','ALP'])
 a.textReport()
+b = a.__genSegs__()
