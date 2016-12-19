@@ -13,8 +13,22 @@ class ClassNet(object):
     #Disparity Database. Matrix of classVecs.
     disparaDB = {}
 
-    #Traceback memo. Contains ClassName-Keyset Pairs. Removes need for recursive
-    #search whenever disparities need to be found.
+    def __validate__(self, line):
+        '''Makes sure that the homebrew is properly formatted.'''
+
+        try: line = eval(line)
+        except: print("This line is malformatted: ",line,"\n Aborting...")
+
+        allStr = type(line[0]) == type(line[2]) == type(line[3]) == str
+        lEq = len(line[1]) == len(self.disparaDB["DCL"][1])
+
+        lStr = str(line)
+
+        assert type(line) is list, "This line is malformatted: " + lStr
+        assert allStr, "Missing quotes in this line: " + lStr
+        assert lEq, "Either too many or too few stat modifiers in this: " + lStr
+
+        return line
 
     def __loadClassFromFile__(self):
 
@@ -32,7 +46,9 @@ class ClassNet(object):
 
             if (curLine != '') and (curLine[0] != '#'):
 
-                self.registerClass(eval(curLine))
+                line = self.__validate__(curLine)
+
+                self.registerClass(line)
 
             curLine = file.readline()
 
@@ -49,7 +65,7 @@ class ClassNet(object):
 
         routes = [[],[]]
 
-        while firstClass != "DCL" and secondClass != "DCL":
+        while firstClass != "DCL" or secondClass != "DCL":
 
             if firstClass != "DCL":
                 routes[0] += [self.disparaDB[firstClass][1]]
@@ -76,6 +92,8 @@ class ClassNet(object):
         rOP = product(routes[0])
         rTP = product(routes[1])
 
+        print(rOP,rTP)
+
         return [rOP[i]/rTP[i] for i in range(len(rOP))]
         
 
@@ -85,4 +103,4 @@ class ClassNet(object):
             self.disparaDB[playerClass[-1]] = playerClass
 
 a = ClassNet()
-b = a.findDisparity("BRK","GTL")
+b = a.findDisparity("AIO","IMM")
