@@ -2,100 +2,295 @@ from math import log,ceil
 
 class Stats(object):
 
+    #Class name and Abbrevs?
+    CLS = ['UNDEFINED','ERR']
+    #^^Migrate to actual class class; stats only really needs a multvec for
+    #upgrades
+
     #Let's allow human-memorable setters and getters.
     nameMap = {'PHS':0,'RES':1,'INS':2,'INT':3,'PER':4,'EXS':5,'CLV':6,
                'ST':0,'SP':1,'VT':2,'IM':3,'FL':4,'WT':5,'SM':6,'ID':7,
                'IS':8,'NS':9,'AP':10,'DS':11,'CR':12,'CI':13}
 
-    #Base Stats Vector. See above.
+    #Base Stats Vector. Settable. Max val of each part: 7**7.
     bStats = [1+1j] * 7
 
-    #Class name and Abbrevs?
-    CLS = ['UNDEFINED','ERR']
-
-    #Postcalc Base Stats.
+    #Postcalc Base Stats. This stores stats after nullification.
     bStatsFinal = []
-
-    #Derived Stats Vector. What's abctually used in calculation for ease of code
-    dStats = [0] * len(bStats) * 2
-
-
-    #Debuffs Vector. Needs to be separate so calculating debuff removal doesn't
-    #alter the stats under consideration.
-    dSDB = [0] * len(bStats) * 2
-
-    #Rebuff Vec + ALmighty Vec. Latter determines
-    buffs = [0] * len(bStats) * 2
-    almighty = [False] * len(bStats) * 2
-
-    #Short and long-term non-innate buff vectors. Use short term for status fx
-    #long term for item bonuses and/or weird permanent effects.
-    #Format: [[buff,buffStatKey],...]. Ex: Buff ID + 1 = [1,7], or [1,'ID']
-    
-    stBuffs = []
-    ltBuffs = []
 
     #Offset Modifier Vector. Gives a value for how much a Complex Base Stat can
     #grow before negative effects are invoked. Directly Modifiable.
     #Format: [PHS.realOffset,PHS.imagOffset,...CLS.realOffset, CLS.imagOffset]
     offset = [0] * len(bStats) * 2
 
-    offset[7] = 4
+    
+    #Derived Stats Vector. Calculated from bStatsFinal.
+    dStats = [0] * len(bStats) * 2
 
+    #Holds postbuff dStats for reduced computation.
+    dStatsFinal = []
+
+
+    #Debuffs Vector. Needs to be separate so calculating debuff removal doesn't
+    #alter the stats under consideration. Calculated from bStats
+    dSDB = [0] * len(bStats) * 2
+
+    #Rebuff Vec. Determines how much of cross-stat debuff is negated by overlaps
+    #Calculated from dStats.
+    buffs = [0] * len(bStats) * 2
+
+    #Almighty Vec. Used to determine if the buff gets multiplied by
+    #2, or not. True = it does. Set to True when overlap of 7 unrelated stats.
+    almighty = [False] * len(bStats) * 2
+
+
+    #Short and long-term non-innate buff vectors. Settable.
+    #Use short term for status fx, long term for item bonuses and/or
+    #weird permanent effects.
+    #Format: [[buff,buffStatKey],...]. Ex: Buff ID + 1 = [1,7], or [1,'ID']
+    stBuffs = []
+    ltBuffs = []
+
+    
     #TEST VALS REMOVE LATER
-    bStats = [33+1j, 1+44444j, 1j+332552, 2j + 22249, 1j+11232, 1j+2, 1j+7**7]
+    offset[7] = 4
+    #bStats = [33+1j, 1+44444j, 1j+332552, 2j + 22249, 1j+11232, 1j+2, 1j+7**7]
+    bStats = [7**6 + 1j] * 7
 
-    def __genSegs__(self):
-
-        ds = self.dStats
-        mod = len(ds) / 2
-
-        segs = [[(-ds[i] / 2 + int(i/2)) %  mod, (ds[i] / 2 + int(i/2)) % mod]
-                for i in range(len(ds))]
-        segs = [segs[i] if ds[i] % 7 != 0 else (True if int(ds[i]) == 7
-                                                else False)
-                for i in range(len(segs))]
-        return segs
-
-    def __testSeg__(self,index,order,segs,curSeg):
-        '''Recursive determiner.'''
-
-        
-
-
-    def __calcInnateBuffs__(self):
-
-        segs = __genSegs__()
-
-        for i in range(len(segs)):
-
-            order = 0
-
-            if segs[i]
-
-            for item in segs:
-
-                if type(item) is complex:
-
-                    #Don't count self or opposing stat!
-                    if item != segs[i] and item != segs[i-1 if i%2 == 1 else i+1]:
-
-                        #run the segtest, which is in another function because
-                        #recursion
-                        __testSeg__(i,order,segs,item)
-                        
-
-                elif item: #if its bool/true
-
-                    order += 1
-                    self.buffs[i] += 1/(len(self.dStats) * self.dStats[i]
-
-            if order >= 7:
-                
-
-                self.almighty[i] = True
-
-        buffs = [item if item <= 3.5 else 3.5 for item in buffs
+##    def __genSegs__(self):
+##        '''Generate line segments from dStats.'''
+##
+##        ds = self.dStats
+##        mod = len(ds) / 2
+##
+##        segs = [[(-ds[i] / 2 + int(i/2)) %  mod, (ds[i] / 2 + int(i/2)) % mod]
+##                for i in range(len(ds))]
+##        segs = [segs[i] if ds[i] % 7 != 0 else (True if int(ds[i]) == 7
+##                                                else False)
+##                for i in range(len(segs))]
+##        return segs
+##
+##    def __calcBuffs__(self):
+##
+##        lBs = len(self.bStats) - 1
+##
+##        for i in self.dStats:
+##
+##            dsI = self.dStats.index(i)
+##
+##            #where the item is centered
+##            pos = int(dsI/2)
+##
+##            #what it's edge is...
+##            edge = i/2
+##
+##            #stats in dStats that aren't i or its counterpart
+##            testStats = self.dStats[:pos*2] + self.dStats[pos*2 + 2:]
+##
+##            #how many things are overlapping
+##            order = 1
+##
+##            diffSum = i
+##
+##            for j in testStats:
+##
+##                
+##                
+##                jPos = int(testStats.index(j)/2)
+##                jEdge = j/2
+##
+##                iLef = (pos - edge) % lBs
+##                iRig = (pos + edge) % lBS
+##                jLef = (jPos - jEdge) % lBs
+##                jRig = (jPos + jEdge) % lBs
+##
+##                
+##
+##                diffs = [iRig - jLef,jLef - iRig,
+##
+##                #test if coverage is total.
+##                perfect = ((pos - edge) % lBs > (jPos - jEdge) % lBs) or\
+##                          ((pos + edge) % lBs < (jPos + jEdge) % lBs)
+##
+##                #test if there is coverage, period
+##                partial = ((pos + edge) > (jPos - jEdge)) or\
+##                          ((pos - edge) < (jPos + jEdge)) 
+##
+##                if perfect or j == 7:
+##
+##                    diffs = [i]
+##                    order += 1
+##                    
+##
+##                elif partial:
+##
+##                    iEdgeOver = (pos - edge) % lBs < (pos + edge) % lBs
+##                    jEdgeOver = (jPos - jEdge) % lBs < (jPos + jEdge) % lBs
+##
+##                    diffs = [(pos + edge) - (jPos - jEdge),
+##                             (pos - edge) - (jPos + jEdge)]
+##
+##                    if iEdgeOver or jEdgeOver:
+##
+##                        flipped = [pos - edge != (pos - edge) % lBs,
+##                                   pos + edge != (pos + edge) % lBs]
+##
+##                            
+##                        diffs = [(pos - edge) % 7 - min(7,jPos+jEdge) if flipped[0] else diffs[0],
+##                                 (pos + edge) % 7 - max(0,jPos-jEdge) if flipped[1] else diffs[1]]
+##                            
+##
+##                    
+##                        flipped = [jPos - jEdge != (jPos - jEdge) % lBs,
+##                                    jPos + jEdge != (jPos + jEdge) % lBs]
+##
+##                        order += 1
+##
+##
+##                #Discard negative values, which indicate no overlap.
+##                diffSum += sum([val for val in diffs if val >= 0])
+##                    
+##
+##            if order >= 7:
+##
+##                self.almighty[dsI + 1 if dsI % 2 == 0 else dsI - 1] = True
+##
+##            self.buffs[dsI + 1 if dsI % 2 == 0 else dsI - 1] = diffSum / (lBs * 2)
+##
+##                
+##
+##
+##            
+##
+##        accumulator = 0
+##
+##        valRltL = #right side of region exceeds leftmost of curSeg
+##        valLgtR = #left side reightmost
+##        perfect = #if dStat = 7.0
+##        null = #if dStat = 0
+##
+##        
+##
+##        if (valRltL or valLgtR) or perfect:
+##
+##            accumulator += rVal - lVal /len(self.dStats)
+##            if unique(
+##            
+##
+##        elif null: pass
+##
+##        else:
+##
+##            #code to determine number and what it gets subtracted from here.
+##            #basically, it's smaller from larger.
+##
+##            diff = [val1,val2]
+##            diff.sort()
+##
+##            accumulator +=
+##
+##        self.buffs[i+1 if blah else i-1] += accumulator
+##
+##        
+##
+##    def __testSeg__(self,index,order,segs,curSeg):
+##        '''Figures out overlaps'''
+##
+##        bsL = len(self.bStats)
+##
+##        #Derestrict modular space. Prrrrobably should just kill modulus upstream
+##        leftOff = curSeg[0] if curSeg[0] > curSeg[1] else curSeg[0] - bsL
+##
+##        eq = leftOff != curSeg[0]
+##        
+##        rightOff = curSeg[1] if curSeg[1] < curSeg[0] and eq else curSeg[1] + bsL
+##
+##        curSeg = [leftOff,rightOff] 
+##
+##        #prune self and shadow.
+##        nInd = int(index/2) * 2
+##        relSegs = segs[:nInd] + segs[nInd + 2:]
+##
+##        #kill bools
+##        relSegs = [val for val in relSegs if type(val) != bool]
+##        
+##
+##        #segments overlapping from left
+##        olS = [curSeg[0]]
+##
+##        #from right
+##        orS = [curSeg[1]]
+##
+##        #print(relSegs)
+##
+##        #Sort everything into overlaps that cross from the left of curSeg and
+##        #those coming from the right.
+##        for lens in relSegs:
+##
+##            lLeftOff = lens[0] if lens[0] > lens[1] else lens[0] - bsL
+##
+##            eq = lLeftOff != lens[0]
+##            
+##            lRightOff = lens[1] if lens[1] < lens[0] and eq else lens[1] + bsL
+##        
+##            centre = (lLeftOff + lRightOff)/2
+##            
+##
+##            ineqs = [curSeg[0] < lRightOff < curSeg[1],
+##                     curSeg[0] < lLeftOff < curSeg[1]]
+##
+##            if ineqs[0]:
+##                olS += [lRightOff]
+##
+##            if ineqs[1]:
+##                orS += [lLeftOff]
+##                
+##            #increase reported order of overlap.
+##            if ineqs[0] or ineqs[1]: order += 1
+##
+##        #large-to-small val sort for iterative convenience.
+##        olS.sort(reverse = True)
+##        orS.sort(reverse = True)
+##
+##        #this needs to be put into an internal function, and made recursive.
+##        diffsL =[(olS[i] - olS[i+1]) * (len(olS) - 1 - i) / (bsL * 2)
+##                 for i in range(len(olS) - 1)]
+##        diffsR =[(orS[i] - orS[i+1]) *  i / (bsL * 2) 
+##                 for i in range(len(orS) - 1)]
+##
+##        self.buffs[index] += sum(diffsL) + sum(diffsR)
+##
+##        #Return order of region  because why the fuck
+##        return order
+##
+##        
+##
+##
+##    def __calcInnateBuffs__(self):
+##
+##        segs = self.__genSegs__()
+##
+##        for i in range(len(segs)):
+##
+##            order = 0
+##
+##
+##            if type(segs[i]) is list:
+##                #run the segtest, which is in another function because
+##                #recursion
+##                order = self.__testSeg__(i,order,segs,segs[i])
+##                    
+##
+##            elif (type(segs[i]) is bool) and segs[i]: #if its bool/true
+##
+##                order += 1
+##                self.buffs[i] += 1/len(self.dStats) * self.dStats[i]
+##
+##            if order >= 7:
+##                
+##                self.almighty[i] = True
+##
+##        #self.buffs = [item if item <= 3.5 else 3.5 for item in self.buffs]
 
         
 
@@ -141,6 +336,24 @@ class Stats(object):
                       -log(self.bStatsFinal[int(i/2)].real,7))/2
                      for i in range(len(self.dStats))]
 
+    def __calcDerivFinal__(self):
+
+        remoBuffs = self.stBuffs + self.ltBuffs
+
+        for i in range(len(self.dStats)):
+
+            self.dStatsFinal += [self.dStats[i] + self.dSDB[i] + self.buffs[i]]
+
+            if self.almighty[i]: self.dStatsFinal[i] += self.buffs[i]
+
+        for item in remoBuffs:
+
+            self.dStatsFinal[remoBuffs[1]] += remoBuffs[0]
+
+            
+
+        
+
     def __init__(self,cls=['Undefined,ERR']):
 
         if self.CLS[1] == 'ERR': self.CLS = cls
@@ -149,7 +362,9 @@ class Stats(object):
 
         self.__calcDerivStats__()
 
-        #self.__calcInnateBuffs__()
+        self.__calcBuffs__()
+
+        self.__calcDerivFinal__()
 
     def classUp(self,newclass):
 
