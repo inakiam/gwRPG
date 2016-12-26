@@ -1,7 +1,7 @@
 class ClassNet(object):
 
     '''the network of all classes that records the multipliers between classes. and applies them
-       Finds the disparities between classes.'''
+       if no disparity is registered, it attempts to find one algorithmically'''
 
     #Fundamental Format: [parent,[multvec], longName, shortName]
     #parent is the longName for the class the Class comes from.
@@ -14,8 +14,7 @@ class ClassNet(object):
     disparaDB = {}
 
     def __validate__(self, line):
-        '''Makes sure that the homebrew is properly formatted.
-           Hillariously naieve and insecure, probably.'''
+        '''Makes sure that the homebrew is properly formatted.'''
 
         try: line = eval(line)
         except: print("This line is malformatted: ",line,"\n Aborting...")
@@ -45,7 +44,6 @@ class ClassNet(object):
             curLine = curLine[:len(curLine) - 1] if curLine[-1] != ']' else\
                       curLine
 
-            #if not an empty line or comment line
             if (curLine != '') and (curLine[0] != '#'):
 
                 line = self.__validate__(curLine)
