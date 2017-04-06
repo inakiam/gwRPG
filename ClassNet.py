@@ -101,6 +101,3 @@ class ClassNet(object):
         
         if type(playerClass) is list:
             self.disparaDB[playerClass[-1]] = playerClass
-
-a = ClassNet()
-b = a.findDisparity("AIO","IMM")
